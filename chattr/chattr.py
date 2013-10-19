@@ -44,21 +44,25 @@ class App(tk.Tk):
                                command=self.normalise)
 
     def insert(self, fname):
+        print 'insert', fname
         stack = []
         while not self._tree.exists(fname):
             stack.insert(0, fname)
             fname = path.dirname(fname)
         for fname in stack:
-            self._tree.insert(path.dirname(fname), 'end', fname,
+            self._tree.insert(path.dirname(fname), 'end', fname,    
                               text=path.basename(fname))
 
     @staticmethod
     def has_normal_attributes(fname):
-        return win32api.GetFileAttributes(fname) != win32con.FILE_ATTRIBUTE_NORMAL
+        attrs = win32api.GetFileAttributes(fname)
+        return not (attrs & (win32con.FILE_ATTRIBUTE_HIDDEN | win32con.FILE_ATTRIBUTE_SYSTEM))
 
     @staticmethod
     def normalise_attributes(fname):
-        win32api.SetFileAttributes(fname, win32con.FILE_ATTRIBUTE_NORMAL)
+        attrs = win32api.GetFileAttributes(fname)
+        attrs &= ~(win32con.FILE_ATTRIBUTE_HIDDEN | win32con.FILE_ATTRIBUTE_SYSTEM)
+        win32api.SetFileAttributes(fname, attrs)
 
     def normalise(self, fpath=None):
         if fpath is None:
@@ -69,6 +73,7 @@ class App(tk.Tk):
         else:
             for child in children:
                 self.normalise(child)
+        self.quit()
 
 
 if __name__ == '__main__':
